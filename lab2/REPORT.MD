@@ -67,6 +67,8 @@ Pentru această lucrare am ales 3 șabloane de bază, integrându-le natural în
 
 **Utilitate:** Numele și configurația florăriei sunt unice. Se evită alocarea inutilă de memorie pentru mai multe instanțe identice.
 
+![Diagrama de clase pentru Singleton](images/clasa1.png)
+
 ### B. Factory Method Pattern
 
 **Unde este aplicat:** `Delivery/DeliveryFactories.cs`
@@ -75,6 +77,8 @@ Pentru această lucrare am ales 3 șabloane de bază, integrându-le natural în
 
 **Utilitate:** Aplicația nu este cuplată direct de clasele de livrare concretă. Dacă se dorește adăugarea unei metode de livrare noapte sau prin dronă, se va crea doar o nouă fabrică.
 
+![Diagrama de clase pentru Factory Method](images/clasa2.png)
+
 ### C. Builder Pattern (+ Director)
 
 **Unde este aplicat:** `Builders/CustomOrderBuilder.cs` și `Builders/OrderDirector.cs`
@@ -82,6 +86,8 @@ Pentru această lucrare am ales 3 șabloane de bază, integrându-le natural în
 **Mecanism:** `CustomOrderBuilder` oferă metode pas-cu-pas (`BuildRoses`, `BuildTulips`, `BuildDelivery`) pentru a adăuga componente la un `FlowerOrder`. Clasa `OrderDirector` conține o rețetă predefinită (`ConstructValentinesBouquet`) apelând automat pașii necesari pe builder.
 
 **Utilitate:** Permite asamblarea simplă a pachetelor de flori complexe și flexibilitate totală atunci când clientul dorește o comandă personalizată.
+
+![Diagrama de clase pentru Builder](images/clasa3.png)
 
 ## 5. Principiile SOLID Integrat (Moștenite din Lab 1)
 
