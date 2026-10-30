@@ -1,102 +1,112 @@
-Raport de Laborator 2: Creational Design Patterns & SOLID
+# Raport de Laborator 2: Creational Design Patterns & SOLID
 
-Tema: Sistem de gestionare a comenzilor pentru o Florărie
-Scopul lucrării: Analiza, înțelegerea și implementarea a cel puțin 3 șabloane de proiectare creaționale (Creational Design Patterns), extinzând o aplicație care respectă principiile SOLID.
+**Tema:** Sistem de gestionare a comenzilor pentru o Florărie
+**Disciplina:** Tehnici și Mecanisme de Proiectare Software (TMPS)
+**Scopul lucrării:** Analiza, înțelegerea și implementarea șabloanelor de proiectare creaționale (Creational Design Patterns) într-o aplicație scrisă în C#, extinzând structura bazată pe principiile SOLID.
 
-1. Descrierea Proiectului
+## 1. Descrierea Proiectului
 
-Proiectul simulează sistemul de comenzi al unei florării. Clientul poate comanda buchete de flori (fie pachete predefinite, fie comenzi personalizate manual), poate alege o metodă de livrare și o metodă de plată.
+Proiectul simulează sistemul informatic al unei florării. Aplicația permite crearea și gestiunea comenzilor de flori (fie prin pachete predefinite speciale, fie prin comenzi personalizate de la tastatură), oferind selecția dinamică a modalităților de livrare și de plată.
 
-Aplicația este construită pe o arhitectură curată (Domain-Driven), separând logica de business în module independente pentru a fi ușor de întreținut și extins.
+Proiectul este structurat după o arhitectură curată orientată pe domenii (Domain-Driven Design), izolând entitățile, fabricile, builder-ele și serviciile în module dedicate.
 
-2. Structura Proiectului (Domain-Driven)
+## 2. Privire de Ansamblu: Șabloanele Creaționale (Creational Patterns)
 
-Codul a fost organizat pe foldere în funcție de rolul componentelor, respectând Single Responsibility Principle la nivel de arhitectură:
+Șabloanele creaționale au rolul de a abstractiza și controla procesul de instanțiere a obiectelor, făcând sistemul independent de modul în care obiectele sale sunt create, compuse și reprezentate.
 
-Program.cs - Punctul de intrare (Meniul interactiv)
+| Șablon (Pattern) | Clasificare | Descriere pe scurt |
+|---|---|---|
+| Singleton | Obiect | Garantează că o clasă are o singură instanță globală în tot programul. |
+| Factory Method | Clasă | Definește o interfață de creare, lăsând subclasele să decidă ce obiect concret instanțiază. |
+| Abstract Factory | Obiect | Oferă o interfață pentru crearea familiilor de obiecte înrudite/dependente. |
+| Builder | Obiect | Separă construcția unui obiect complex de reprezentarea sa, asamblându-l pas cu pas. |
+| Prototype | Obiect | Permite crearea de obiecte noi prin clonarea (copierea) unei instanțe existente. |
+| Object Pool | Obiect | Reciclează și reutilizează obiecte scumpe de creat (ex: conexiuni BD, thread-uri) dintr-un container partajat, în loc să le distrugă și recreeze repetat. |
 
-Core/
+## 3. Structura Proiectului (Domain-Driven Architecture)
 
-StoreConfiguration.cs - (Singleton) Setările magazinului
+Codul a fost organizat pe foldere tematice pentru a asigura o lizibilitate maximă și o mentenanță ușoară:
 
-Flower.cs - Entitatea de bază a unei flori
+```text
+FlorarieSOLID/
+├── main.cs (sau Program.cs)    # Punctul de intrare (Meniul interactiv)
+│
+├── Core/                        # Entitățile și setările de bază
+│   ├── StoreConfiguration.cs    # (Singleton) Setările unice ale florăriei
+│   ├── Flower.cs                # Modelul pentru o floare
+│   ├── OrderItem.cs             # Rând de pe factură (Floare + Cantitate)
+│   └── FlowerOrder.cs           # (SRP) Logica datelor comenzii
+│
+├── Delivery/                    # Modulul de livrare
+│   ├── IDeliveryCost.cs         # (OCP) Interfața pentru livrare
+│   ├── DeliveryMethods.cs       # Implementări concrete (Standard / Express)
+│   └── DeliveryFactories.cs     # (Factory Method) Fabricile de livrare
+│
+├── Payments/                    # Modulul de procesare a plăților
+│   ├── PaymentInterfaces.cs     # (ISP) Interfețe segregate pentru Cash și Card
+│   └── PaymentTypes.cs          # Tipuri de comenzi (InStore / Online)
+│
+├── Builders/                    # Modulul de asamblare a comenzilor complexe
+│   ├── IOrderBuilder.cs         # Interfața builder-ului
+│   ├── CustomOrderBuilder.cs    # (Builder) Implementarea construcției pas cu pas
+│   └── OrderDirector.cs         # (Director) Ghidul pentru pachete predefinite
+│
+└── Utils/                       # Utilitare
+    └── InvoicePrinter.cs        # (SRP) Afișarea și formatarea facturii
+```
 
-OrderItem.cs - Element de pe factură (Floare + Cantitate)
+## 4. Design Patterns Implementate în Proiect
 
-FlowerOrder.cs - (SRP) Logica principală a comenzii
+Pentru această lucrare am ales 3 șabloane de bază, integrându-le natural în fluxul aplicației:
 
-Delivery/
+### A. Singleton Pattern
 
-IDeliveryCost.cs - (OCP) Interfața pentru livrare
+**Unde este aplicat:** `Core/StoreConfiguration.cs`
 
-DeliveryMethods.cs - Implementările livrării (Standard/Express)
+**Mecanism:** Constructorul este privatizat (`private StoreConfiguration()`), împiedicând utilizarea operatorului `new` din exterior. Accesul se realizează exclusiv prin proprietatea statică `Instance`.
 
-DeliveryFactories.cs - (Factory Method) Fabricile de livrare
+**Utilitate:** Numele și configurația florăriei sunt unice. Se evită alocarea inutilă de memorie pentru mai multe instanțe identice.
 
-Payments/
+### B. Factory Method Pattern
 
-PaymentInterfaces.cs - (ISP) Interfețe separate pentru Cash și Card
+**Unde este aplicat:** `Delivery/DeliveryFactories.cs`
 
-PaymentTypes.cs - Implementările comenzilor (Online/Fizic)
+**Mecanism:** Clasa abstractă `DeliveryCreator` definește metoda abstractă `FactoryMethod()`. Subclasele concrete (`StandardDeliveryCreator`, `ExpressDeliveryCreator`) suprapun această metodă pentru a instanția tipul corespunzător de livrare.
 
-Builders/
+**Utilitate:** Aplicația nu este cuplată direct de clasele de livrare concretă. Dacă se dorește adăugarea unei metode de livrare noapte sau prin dronă, se va crea doar o nouă fabrică.
 
-IOrderBuilder.cs - Interfața constructorului de comenzi
+### C. Builder Pattern (+ Director)
 
-CustomOrderBuilder.cs - (Builder) Implementarea pas cu pas
+**Unde este aplicat:** `Builders/CustomOrderBuilder.cs` și `Builders/OrderDirector.cs`
 
-OrderDirector.cs - (Director) Asistentul pentru comenzi complexe predefinite
+**Mecanism:** `CustomOrderBuilder` oferă metode pas-cu-pas (`BuildRoses`, `BuildTulips`, `BuildDelivery`) pentru a adăuga componente la un `FlowerOrder`. Clasa `OrderDirector` conține o rețetă predefinită (`ConstructValentinesBouquet`) apelând automat pașii necesari pe builder.
 
-Utils/
+**Utilitate:** Permite asamblarea simplă a pachetelor de flori complexe și flexibilitate totală atunci când clientul dorește o comandă personalizată.
 
-InvoicePrinter.cs - (SRP) Clasă dedicată exclusiv afișării textului
+## 5. Principiile SOLID Integrat (Moștenite din Lab 1)
 
-3. Creational Design Patterns Implementate
+**SRP (Single Responsibility Principle):** `FlowerOrder` calculează doar totalul și gestiunea articolelor, iar `InvoicePrinter` se ocupă exclusiv de formatarea și afișarea textului pe consolă.
 
-Pentru acest laborator am ales 3 șabloane creaționale de bază care se ocupă cu instanțierea controlată a claselor:
+**OCP (Open/Closed Principle):** Interfața `IDeliveryCost` permite extinderea opțiunilor de livrare fără a modifica codul existent de calcul al comenzii.
 
-A. Singleton Pattern
+**ISP (Interface Segregation Principle):** Interfețele `ICardPayment` și `ICashPayment` sunt segregate. Clasa `OnlineOrder` implementează doar plata cu cardul, fără a conține metode inutile de plata cash.
 
-Concept: Asigură că o clasă are o singură instanță în tot programul și oferă un punct de acces global la aceasta.
+## 6. Instrucțiuni de Rulare
 
-Implementare: Core/StoreConfiguration.cs
+Deschideți terminalul în folderul proiectului.
 
-Explicație: Florăria are un singur nume ("Florăria SOLID & Patterns"). Am privatizat constructorul (private StoreConfiguration()) și am oferit acces doar prin proprietatea statică Instance. Astfel, datele magazinului sunt unice și nu se ocupă memorie inutil cu instanțe multiple.
+Executați comanda:
 
-B. Factory Method Pattern
+```bash
+dotnet run
+```
 
-Concept: Definește o interfață pentru crearea unui obiect, dar lasă subclasele să decidă ce clasă să instanțieze.
+Utilizați meniul interactiv pentru a alege între un pachet predefinit (Valentine's Day) sau o comandă personalizată pas cu pas.
 
-Implementare: Delivery/DeliveryFactories.cs
+## 7. Concluzie
 
-Explicație: În loc să folosesc instanțierea directă în logica aplicației, am creat DeliveryCreator (clasa abstractă) și subclase concrete (ExpressDeliveryCreator). Când clientul alege livrarea, aplicația cere fabricii să producă instanța corectă prin apelarea metodei FactoryMethod().
+În urma efectuării acestei lucrări de laborator, am extins arhitectura sistemului de gestionare a florăriei, integrând cu succes cele trei șabloane de proiectare creaționale (Singleton, Factory Method și Builder).
 
-C. Builder Pattern
+Prin implementarea Singleton, am securizat și eficientizat gestionarea memoriei pentru configurația globală a magazinului. Factory Method a permis decuplarea logicii de instanțiere pentru metodele de livrare, respectând riguros principiul Open/Closed, iar șablonul Builder a rezolvat problema creării obiectelor complexe, separând clar reprezentarea de asamblarea pas cu pas.
 
-Concept: Separă construcția unui obiect complex de reprezentarea sa, permițând asamblarea pas cu pas.
-
-Implementare: Builders/CustomOrderBuilder.cs și Builders/OrderDirector.cs
-
-Explicație: O comandă (FlowerOrder) a devenit un obiect complex. Am folosit un Builder care are metode specifice pentru fiecare pas (BuildRoses, BuildDelivery). Adițional, am implementat clasa OrderDirector care funcționează ca un rețetar: la comanda "ConstructValentinesBouquet", directorul dictează automat builder-ului toți pașii necesari pentru a asambla buchetul predefinit.
-
-4. Principiile SOLID Respectate (Din Lab 1)
-
-SRP (Single Responsibility Principle):
-
-Separarea clară a datelor matematice (FlowerOrder) de logica de printare pe ecran (InvoicePrinter). Clasa de facturare nu face calcule, doar afișează.
-
-OCP (Open/Closed Principle):
-
-Interfața IDeliveryCost. Dacă florăria adaugă Livrare VIP cu Drona, vom crea doar o clasă nouă care extinde interfața, fără să modificăm codul claselor de livrare existente sau logica de bază a comenzii. Sistemul este deschis pentru extindere și închis pentru modificare.
-
-ISP (Interface Segregation Principle):
-
-Plățile au fost separate în două interfețe mici: ICardPayment și ICashPayment. Comanda online (OnlineOrder) implementează DOAR plata cu cardul, nefiind obligată să aibă metode irelevante (cum ar fi plata cu bani gheață).
-
-5. Instrucțiuni de Rulare
-
-Deschideți un terminal în rădăcina proiectului.
-
-Compilați și rulați aplicația folosind comanda dotnet run.
-
-Urmați instrucțiunile interactive din meniul afișat în consolă.
+Organizarea structurală a proiectului pe domenii logice asigură un nivel înalt de mentenanță și claritate. Rezultatul final este un cod curat, modular, ușor de testat și pregătit pentru viitoare extinderi.
